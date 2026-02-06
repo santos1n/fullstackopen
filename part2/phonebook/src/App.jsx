@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import personService from "./services/persons";
 
 const Search = ({ value, onChange }) => {
   return (
@@ -34,21 +36,26 @@ const Input = ({ text, value, onChange }) => {
   );
 };
 
-const Persons = ({ person }) => {
+const Persons = ({ person, removePerson }) => {
   return (
     <div>
-      {person.name} - {person.number}
+      {person.name} - {person.number} -{" "}
+      <button onClick={removePerson}>Delete</button>
     </div>
   );
 };
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: "Arto Hellas", number: "1234" },
-  ]);
+  const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("John Smith");
   const [newNumber, setNewNumber] = useState("5278");
   const [searchName, setSearchName] = useState("");
+
+  useEffect(() => {
+    personService.getAll().then((initialPersons) => {
+      setPersons(initialPersons);
+    });
+  }, []);
 
   const addPerson = (event) => {
     event.preventDefault();
@@ -56,14 +63,35 @@ const App = () => {
       name: newName,
       number: newNumber,
     };
+
     if (persons.some((person) => person.name === newName)) {
       alert(`${newName} is already added to phonebook`);
       return;
     }
-    setPersons(persons.concat(personObject));
-    setNewName("");
-    setNewNumber("");
+
+    personService.create(personObject).then((returnedPerson) => {
+      setPersons(persons.concat(returnedPerson));
+      setNewName("");
+      setNewNumber("");
+    });
   };
+
+  const removePerson = (person) => {
+    const remainingPersons = persons.filter((p) => p.id !== person.id);
+
+    if (window.confirm(`Delete ${person.name} ?`)) {
+      personService.remove(person.id).then((returnedPerson) => {
+        setPersons(remainingPersons);
+      });
+    }
+  };
+
+  const personsToShow =
+    searchName === ""
+      ? persons
+      : persons.filter((person) =>
+          person.name.toLowerCase().includes(searchName.toLowerCase()),
+        );
 
   const handleNewName = (event) => {
     setNewName(event.target.value);
@@ -76,13 +104,6 @@ const App = () => {
   const handleSearchName = (event) => {
     setSearchName(event.target.value);
   };
-
-  const personsToShow =
-    searchName === ""
-      ? persons
-      : persons.filter((person) =>
-          person.name.toLowerCase().includes(searchName.toLowerCase()),
-        );
 
   return (
     <div>
@@ -100,7 +121,11 @@ const App = () => {
 
       <h2>Numbers</h2>
       {personsToShow.map((person) => (
-        <Persons key={person.name} person={person} />
+        <Persons
+          key={person.id}
+          person={person}
+          removePerson={() => removePerson(person)}
+        />
       ))}
     </div>
   );
