@@ -64,8 +64,28 @@ const App = () => {
       number: newNumber,
     };
 
-    if (persons.some((person) => person.name === newName)) {
+    const dupName = persons.find((person) => person.name === newName);
+    const dupNum = persons.find((person) => person.number === newNumber);
+
+    if (dupName && dupNum) {
       alert(`${newName} is already added to phonebook`);
+      return;
+    }
+
+    const windowText = `${newName} is already added to phonebook, replace old number with ${newNumber} ?`;
+
+    if (dupName && !dupNum) {
+      if (window.confirm(windowText)) {
+        const changedNum = { ...dupName, number: newNumber };
+
+        personService
+          .update(changedNum.id, changedNum)
+          .then((returnedPerson) => {
+            setPersons(
+              persons.map((p) => (p.id === changedNum.id ? returnedPerson : p)),
+            );
+          });
+      }
       return;
     }
 
