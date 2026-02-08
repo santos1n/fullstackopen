@@ -4,12 +4,14 @@ import countryService from "./services/countries";
 const Country = ({ country }) => {
   const [show, setShow] = useState(false);
   const showButton = () => setShow(!show);
+  const label = show ? "hide" : "show";
 
   return (
     <div>
       <li>
-        {country.name.common} <Button label="show" handleClick={showButton} />
+        {country.name.common} <Button label={label} handleClick={showButton} />
       </li>
+      <CountriesDetail country={country} show={show} />
     </div>
   );
 };
@@ -36,7 +38,10 @@ const CountriesList = ({ countries }) => {
   }
 };
 
-const CountriesDetail = ({ country }) => {
+const CountriesDetail = ({ country, show }) => {
+  if (show === false) {
+    return null;
+  }
   return (
     <div>
       <h1>{country.name.common}</h1>
