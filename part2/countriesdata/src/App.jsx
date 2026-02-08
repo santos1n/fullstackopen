@@ -1,17 +1,28 @@
 import { useState, useEffect } from "react";
 import countryService from "./services/countries";
+import weatherService from "./services/weather";
 
-const Country = ({ country }) => {
-  const [show, setShow] = useState(false);
-  const showButton = () => setShow(!show);
-  const label = show ? "hide" : "show";
+const Weather = ({ capital, lat, lon }) => {
+  const [temp, setTemp] = useState(null);
+  const [urlIcon, setUrlIcon] = useState(null);
+  const [wind, setWind] = useState(null);
+
+  useEffect(() => {
+    weatherService.getWeather(lat, lon).then((response) => {
+      setTemp(response.main.temp);
+      setUrlIcon(
+        `https://openweathermap.org/img/wn/${response.weather[0].icon}@4x.png`,
+      );
+      setWind(response.wind.speed);
+    });
+  }, []);
 
   return (
     <div>
-      <li>
-        {country.name.common} <Button label={label} handleClick={showButton} />
-      </li>
-      <CountriesDetail country={country} show={show} />
+      <h2>Weather in {capital}</h2>
+      <p>Temperature {(temp - 273.15).toFixed(2)} Celcius</p>
+      <img src={urlIcon} width={100} />
+      <p>Wind at {wind} m/s</p>
     </div>
   );
 };
@@ -38,6 +49,21 @@ const CountriesList = ({ countries }) => {
   }
 };
 
+const Country = ({ country }) => {
+  const [show, setShow] = useState(false);
+  const showButton = () => setShow(!show);
+  const label = show ? "hide" : "show";
+
+  return (
+    <div>
+      <li>
+        {country.name.common} <Button label={label} handleClick={showButton} />
+      </li>
+      <CountriesDetail country={country} show={show} />
+    </div>
+  );
+};
+
 const CountriesDetail = ({ country, show }) => {
   if (show === false) {
     return null;
@@ -53,7 +79,12 @@ const CountriesDetail = ({ country, show }) => {
           <li key={i}>{e}</li>
         ))}
       </ul>
-      <img src={country.flags.png} alt={country.flags.alt} />
+      <img src={country.flags.png} alt={country.flags.alt} width={200} />
+      <Weather
+        capital={country.capital}
+        lat={country.capitalInfo.latlng[0]}
+        lon={country.capitalInfo.latlng[1]}
+      />
     </div>
   );
 };
@@ -67,12 +98,7 @@ const App = () => {
   const [countriesFilter, setCountriesFilter] = useState([]);
 
   useEffect(() => {
-    console.log("effect run, search is now", countries);
-
-    console.log("fetching countries data...");
-
     countryService.getCountries().then((response) => {
-      console.log(response);
       setCountries(response);
     });
   }, []);
