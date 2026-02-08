@@ -20,12 +20,37 @@ const CountriesList = ({ countries }) => {
   } else if (countries.length > 1) {
     return (
       <div>
-        {countries.map((element, index) => (
-          <Country key={index} country={element} />
+        {countries.map((e, i) => (
+          <Country key={i} country={e} />
+        ))}
+      </div>
+    );
+  } else if (countries.length === 1) {
+    return (
+      <div>
+        {countries.map((e, i) => (
+          <CountriesDetail key={i} country={e} />
         ))}
       </div>
     );
   }
+};
+
+const CountriesDetail = ({ country }) => {
+  return (
+    <div>
+      <h1>{country.name.common}</h1>
+      <li>Capital {country.capital[0]}</li>
+      <li>Area {country.area}</li>
+      <h2>Languages</h2>
+      <ul>
+        {Object.values(country.languages).map((e, i) => (
+          <li key={i}>{e}</li>
+        ))}
+      </ul>
+      <img src={country.flags.png} alt={country.flags.alt} />
+    </div>
+  );
 };
 
 const Button = ({ label, handleClick }) => {
