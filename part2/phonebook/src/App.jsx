@@ -1,55 +1,17 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import personService from "./services/persons";
-
-const Search = ({ value, onChange }) => {
-  return (
-    <div>
-      Search: <input value={value} onChange={onChange} />
-    </div>
-  );
-};
-
-const PersonsForm = ({
-  onSubmit,
-  newName,
-  handleNewName,
-  newNumber,
-  handleNewNumber,
-}) => {
-  return (
-    <form onSubmit={onSubmit}>
-      <Input text="Name" value={newName} onChange={handleNewName} />
-      <Input text="Number" value={newNumber} onChange={handleNewNumber} />
-      <div>
-        <button type="submit">Add</button>
-      </div>
-    </form>
-  );
-};
-
-const Input = ({ text, value, onChange }) => {
-  return (
-    <div>
-      {text}: <input value={value} onChange={onChange} />
-    </div>
-  );
-};
-
-const Persons = ({ person, removePerson }) => {
-  return (
-    <div>
-      {person.name} - {person.number} -{" "}
-      <button onClick={removePerson}>Delete</button>
-    </div>
-  );
-};
+import Search from "./components/Search";
+import PersonsForm from "./components/PersonsForm";
+import Persons from "./components/Persons";
+import Notification from "./components/Notification";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("John Smith");
   const [newNumber, setNewNumber] = useState("5278");
   const [searchName, setSearchName] = useState("");
+  const [notifMessage, setNotifMessage] = useState(null);
+  const [notifType, setNotifType] = useState("");
 
   useEffect(() => {
     personService.getAll().then((initialPersons) => {
@@ -74,7 +36,7 @@ const App = () => {
 
     const windowText = `${newName} is already added to phonebook, replace old number with ${newNumber} ?`;
 
-    if (dupName && !dupNum) {
+    if (dupName) {
       if (window.confirm(windowText)) {
         const changedNum = { ...dupName, number: newNumber };
 
@@ -84,12 +46,28 @@ const App = () => {
             setPersons(
               persons.map((p) => (p.id === changedNum.id ? returnedPerson : p)),
             );
+          })
+          .catch((error) => {
+            setNotifType("error");
+            setNotifMessage(
+              `Information of '${changedNum.name}' has already been removed from the server. You may try again after the change has been reflected`,
+            );
+            setTimeout(() => {
+              setNotifMessage(null);
+            }, 3000);
+
+            setPersons(persons.filter((p) => p.id !== changedNum.id));
           });
       }
       return;
     }
 
     personService.create(personObject).then((returnedPerson) => {
+      setNotifType("success");
+      setNotifMessage(`Contact '${returnedPerson.name}' is succesfully added`);
+      setTimeout(() => {
+        setNotifMessage(null);
+      }, 3000);
       setPersons(persons.concat(returnedPerson));
       setNewName("");
       setNewNumber("");
@@ -128,6 +106,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={notifMessage} type={notifType} />
       <Search value={searchName} onChange={handleSearchName} />
 
       <h2>Add New Contact</h2>
