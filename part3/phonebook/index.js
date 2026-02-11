@@ -1,7 +1,15 @@
 const express = require("express");
+var morgan = require("morgan");
+
 const app = express();
 
+morgan.token("body", (req) => JSON.stringify(req.body));
+
 app.use(express.json());
+app.use(morgan("tiny"));
+app.use(
+  morgan(":method :url :status :res[content-length] - :response-time ms :body"),
+);
 
 let persons = [
   {
@@ -96,6 +104,11 @@ const generateId = () => {
     persons.length > 0 ? Math.max(...persons.map((p) => Number(p.id))) : 0;
   return String(maxId + 1);
 };
+
+function assignId(req, res, next) {
+  req.id = uuid.v4();
+  next();
+}
 
 const PORT = 3001;
 app.listen(PORT, () => {
